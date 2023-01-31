@@ -1,0 +1,126 @@
+// # Brief
+// ## Functions
+//    - excel
+
+package guDocu
+
+// # Import
+//   - fmt : <builtin> Print format
+//   - github.com/xuri/excelize/v2 : <3rd party> excel
+import (
+	"fmt"
+
+	excelize "github.com/xuri/excelize/v2"
+)
+
+// # Type
+// ## Excel(struct)
+type Excel struct {
+	FilePath string
+	// SheetName string
+}
+
+// ## Sheets(interface)
+type Sheets interface {
+	SetFile() string
+	SetSheet() string
+	Open() *excelize.File
+	// Close() nil
+	Read() string
+	Write() bool
+}
+
+// # Function(Private)
+// ## indexOf
+//   - data 내에서 element의 인덱스
+func indexOf(element string, data []string) int {
+	// fmt.Printf("%v in %v", element, data)
+	for k, v := range data {
+		if element == v {
+			return k
+		}
+	}
+	return -1 //not found.
+}
+
+// ## headerIndexes
+//   - data 내에서 element의 인덱스
+//
+// func headerIndexes(header, fields []string) (indexes map[string]int) {
+func headerIndexes(header, fields []string) (indexes map[int]string) {
+	// indexes = make(map[string]int)
+	indexes = make(map[int]string)
+	for _, field := range fields {
+		// fmt.Printf("field %v in header %v", field, header)
+		// indexes[field] = indexOf(field, header)
+		indexes[indexOf(field, header)] = field
+	}
+	return indexes
+}
+
+// ## dictFromSlices
+//   - slices [][]string
+//   - TODO: generic map[string]<T>
+func dictsFromSlices(slices [][]string) (dicts []map[string]string) {
+	dicts = []map[string]string{}
+	dict := make(map[string]string)
+	indexes := headerIndexes(slices[0], slices[0])
+	for _, row := range slices[1:] {
+		dict = map[string]string{}
+		for i, cell := range row {
+			dict[indexes[i]] = cell
+		}
+		dicts = append(dicts, dict)
+	}
+	return dicts
+}
+
+// # Function(interface implement)
+// ## SetFile
+//   - Set Excel's File
+func (e *Excel) SetFile(filePath string) string {
+	e.FilePath = filePath
+	return filePath
+}
+
+// func (e *Excel) SetSheet(sheetName string) string {
+// 	sheetName = sheetName
+// 	return sheetName
+// }
+
+func (e *Excel) Open() *excelize.File {
+	f, err := excelize.OpenFile(e.FilePath)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return f
+}
+
+// func (e *Excel) Read() [][]string {
+func (e *Excel) Read(sheetName string) []map[string]string {
+	f, err := excelize.OpenFile(e.FilePath)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer f.Close()
+	rows, err := f.GetRows(sheetName)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	// return rows
+	return dictsFromSlices(rows)
+}
+
+func (e *Excel) Write(sheetName string) bool {
+	f := excelize.NewFile()
+	index := f.NewSheet(sheetName)
+	f.SetCellValue(sheetName, "A2", "Hello World.")
+	f.SetCellValue(sheetName, "B2", "100")
+	f.SetActiveSheet(index)
+	if err := f.SaveAs(e.FilePath); err != nil {
+		fmt.Println(err)
+		return false
+	}
+	return true
+}

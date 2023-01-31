@@ -38,9 +38,9 @@ func ReadLines(path string) []string {
 
 	readFile.Close()
 
-	for _, line := range fileLines {
-		log.Println(line)
-	}
+	// for _, line := range fileLines {
+	// 	log.Println(line)
+	// }
 
 	// log.Println(fileLines)
 	return fileLines

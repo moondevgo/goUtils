@@ -1,0 +1,99 @@
+// https://blog.logrocket.com/building-simple-app-go-postgresql/
+
+package database
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"time"
+
+	// "strings"
+	// "time"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
+
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
+
+	"github.com/moondevgo/go-mods/basic"
+)
+
+const (
+	YAML_NAME = "database_conn"
+)
+
+//DB접속정보를 가지고 있는 객체를 정의합니다.
+type DBMS struct {
+	User   string `yaml:"user"`
+	Passwd string `yaml:"password"`
+	Host   string `yaml:"host"`
+	Port   int    `yaml:"port"` // TODO: string -> int
+	// db      string // TODO: string -> int
+	// Charset string `yaml:"charset"`
+}
+
+// Section: MySQL
+func MyConnectDb(serverName, dbName string) (*sql.DB, *DBMS, error) {
+	config := basic.GetConfigYaml(YAML_NAME, serverName)
+
+	format := "%s:%s@tcp(%s:%d)/%s" //
+	dsn := fmt.Sprintf(format, config["user"], config["password"], config["host"], config["port"], dbName)
+
+	dbms := &DBMS{User: config["user"].(string), Passwd: config["password"].(string), Host: config["host"].(string), Port: config["port"].(int)}
+	conn, err := sql.Open("mysql", dsn)
+	return conn, dbms, err
+}
+
+// Section: MongoDB
+func GetClientOptions(serverName string, auth bool) (clientOptions *options.ClientOptions) {
+	config := basic.GetConfigYaml(YAML_NAME, serverName)
+
+	if auth {
+		clientOptions = options.Client().ApplyURI(fmt.Sprintf("mongodb://%s:%v", config["host"], config["port"])).SetAuth(options.Credential{
+			Username: config["user"].(string),
+			Password: config["password"].(string),
+		})
+	} else {
+		uri := fmt.Sprintf("mongodb://%s:%s@%s:%v", config["user"], config["password"], config["host"], config["port"])
+		clientOptions = options.Client().ApplyURI(uri)
+	}
+
+	return clientOptions
+
+}
+
+// ConnectDB to MongoDB
+func MgConnectDb(serverName string, auth bool) (client *mongo.Client, ctx context.Context, cancel context.CancelFunc) {
+	// Timeout 설정을 위한 Context생성
+	ctx, cancel = context.WithTimeout(context.Background(), 3*time.Second)
+	clientOptions := GetClientOptions(serverName, false)
+
+	// MongoDB 연결
+	client, err := mongo.Connect(ctx, clientOptions)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = client.Ping(ctx, readpref.Primary()) // Primary DB에 대한 연결 체크
+	if err != nil {
+		fmt.Println(err)
+		// log.Fatal(err)
+	}
+
+	// return client, ctx
+	return client, ctx, cancel
+}
+
+// Section: PostgreSQL
+func PgConnectDb(serverName, dbName string) (*sql.DB, *DBMS, error) {
+	config := basic.GetConfigYaml(YAML_NAME, serverName)
+
+	format := "postgresql://%s:%s@%s:%d/%s?sslmode=disable" // dbName: template0
+	dsn := fmt.Sprintf(format, config["user"], config["password"], config["host"], config["port"], dbName)
+
+	dbms := &DBMS{User: config["user"].(string), Passwd: config["password"].(string), Host: config["host"].(string), Port: config["port"].(int)}
+	conn, err := sql.Open("postgres", dsn)
+	return conn, dbms, err
+}

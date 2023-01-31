@@ -1,0 +1,150 @@
+// [CSV 파일 읽고 쓰기](http://golang.site/go/article/117-CSV-파일-읽고-쓰기)
+
+package main
+
+import (
+	"bufio"
+	"encoding/csv"
+	"fmt"
+	"os"
+	"strings"
+)
+
+const (
+	OPEN_TYPE   = "// RESPONSE DATA PACKET\ntype %s struct {\n" // TODO: structures에서 읽어온 description으로 변경
+	CLOSE_TYPE  = "}\n\n"
+	INDENT_TYPE = "\t"
+)
+
+func indexOf(element string, data []string) int {
+	for k, v := range data {
+		if element == v {
+			return k
+		}
+	}
+	return -1 //not found.
+}
+
+func getIndexList(header, fields []string) (indexList map[string]int) {
+	for _, field := range fields {
+		indexList[field] = indexOf("structure", header)
+	}
+	return indexList
+}
+
+func getRowsFromCsv(path string) [][]string {
+	file, _ := os.Open(path)
+	rdr := csv.NewReader(bufio.NewReader(file))
+	rows, _ := rdr.ReadAll()
+	return rows
+}
+
+func getStructList(path string) (structList map[string]string) {
+	// path := `C:\Dev\inGo\_temp\XingApiDllSpec - structures.csv`
+	for _, row := range getRowsFromCsv(path)[1:] {
+		structList[row[0]] = row[1]
+	}
+	return structList
+}
+
+func getPacketBlocks(pathList, pathPacket string, fields []string, headerNum int) {
+	structList := getStructList(pathList)
+
+}
+
+func main() {
+	// 파일 오픈
+	path := `C:\Dev\inGo\_temp\XingApiDllSpec - packets.csv`
+	fmt.Println(path)
+	file, _ := os.Open(path)
+
+	// csv reader 생성
+	rdr := csv.NewReader(bufio.NewReader(file))
+
+	// csv 내용 모두 읽기
+	rows, _ := rdr.ReadAll()
+	// fmt.Printf("len rows: %v", len(rows))
+	header := rows[0]
+
+	idxStruct := indexOf("structure", header)
+	idxField := indexOf("field", header)
+	idxDtype := indexOf("dtype", header)
+	idxSize := indexOf("size", header)
+	idxDesc := indexOf("desc", header)
+	idxRemark := indexOf("_remark", header)
+
+	strTypeBlock := ""
+	structName := ""
+	// 행,열 읽기
+	for _, row := range rows[1:] {
+		field := strings.Replace(row[idxField], " ", "", -1)
+		dtype := "int32"
+		if row[idxDtype] == "문자열" {
+			dtype = "[" + row[idxSize] + "]byte"
+		}
+		// 기존 name과 동일하면
+		if strings.Compare(structName, row[idxStruct]) != 0 {
+			// Section 생성
+			structName = row[idxStruct]
+			strTypeBlock += fmt.Sprintf(CLOSE_TYPE)
+			strTypeBlock += fmt.Sprintf(OPEN_TYPE, structName)
+		}
+		// Line 추가
+		strTypeBlock += fmt.Sprintf(INDENT_TYPE+"%v	%v", field, dtype) + "   // " + row[idxRemark] + strings.Replace(row[idxDesc], "`", "\t", 1) + "\n"
+	}
+
+	// 첫번째 CLOSE_TYPE 삭제
+	strTypeBlock = strings.Replace(strTypeBlock, CLOSE_TYPE, "", 1)
+	// 마지막 CLOSE_TYPE 추가
+	strTypeBlock += CLOSE_TYPE
+
+	fmt.Println(strTypeBlock)
+}
+
+// googlesheets -> csv -> go
+
+// func createSection(name, level, template string, before string) {
+//     // 동일 이름의 섹션이 있는지 확인 후 없으면
+//     // template이 있으면 사용, 없으면 leval별 default 형식 사용
+//     // `// # {name}`
+// }
+// upsert
+// delete
+// append
+
+// section
+
+// OpenSection	// load template file -> strFile // loadVar
+// OpenQuery	// add Query
+// OpenInBlock	// add InBlock
+// CloseInBlock
+// OpenOutBlock
+// CloseOutBlock
+// CloseQuery
+// CloseSection
+
+// Res File -> InMemory -> Json File
+
+// package main
+
+// import (
+//     "bufio"
+//     "encoding/csv"
+//     "os"
+// )
+
+// func main() {
+//     // 파일 생성
+//     file, err := os.Create("./output.csv")
+//     if err != nil {
+//         panic(err)
+//     }
+
+//     // csv writer 생성
+//     wr := csv.NewWriter(bufio.NewWriter(file))
+
+//     // csv 내용 쓰기
+//     wr.Write([]string{"A", "0.25"})
+//     wr.Write([]string{"B", "55.70"})
+//     wr.Flush()
+// }

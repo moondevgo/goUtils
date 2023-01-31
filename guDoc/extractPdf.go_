@@ -1,0 +1,67 @@
+package main
+
+import (
+	//	"bytes"
+	"fmt"
+	"io/ioutil"
+
+	"github.com/ledongthuc/pdf"
+)
+
+func main() {
+	content, err := readPdf("07.DLL함수Reference.pdf")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(content)
+
+	d1 := []byte(content)
+	err = ioutil.WriteFile("Dll_Reference.txt", d1, 0644)
+	fmt.Println(err)
+	return
+}
+
+func readPdf(path string) (string, error) {
+	f, r, err := pdf.Open(path)
+	defer func() {
+		_ = f.Close()
+	}()
+	if err != nil {
+		return "", err
+	}
+	totalPage := r.NumPage()
+
+	content := ""
+	for pageIndex := 1; pageIndex <= totalPage; pageIndex++ {
+		p := r.Page(pageIndex)
+		if p.V.IsNull() {
+			continue
+		}
+
+		rows, _ := p.GetTextByRow()
+		for _, row := range rows {
+			// println(">>>> row: ", row.Position)
+			for _, word := range row.Content {
+				content += word.S + "\n"
+				// fmt.Println(word.S)
+			}
+		}
+	}
+	return content, nil
+}
+
+//func readPdf(path string) (string, error) {
+//	f, r, err := pdf.Open(path)
+//	// remember close file
+//	defer f.Close()
+//	if err != nil {
+//		return "\n", err
+//	}
+//	var buf bytes.Buffer
+//	b, err := r.GetPlainText()
+//	if err != nil {
+//		return "\n", err
+//	}
+//	buf.ReadFrom(b)
+//	return buf.String(), nil
+//}

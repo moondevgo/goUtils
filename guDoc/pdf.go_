@@ -1,0 +1,141 @@
+package main
+
+import (
+	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/unidoc/unipdf/v3/extractor"
+	"github.com/unidoc/unipdf/v3/model"
+)
+
+func main() {
+	// Reading all files of directory
+	files, err := ioutil.ReadDir(".")
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Iterating through all the files
+	for _, f := range files {
+		// checking for file extensions
+		ext := filepath.Ext(f.Name())
+		// if extension relevant
+		if ext == ".pdf" {
+			// then open file
+			f, err := os.Open(f.Name())
+			if err != nil {
+				panic(err)
+			}
+			defer f.Close()
+
+			reader, err := model.NewPdfReaderLazy(f)
+			if err != nil {
+				panic(err)
+			}
+			// Read page
+			p, err := reader.GetPage(1)
+			if err != nil {
+				panic(err)
+			}
+			// create extractor for page
+			ex, err := extractor.New(p)
+			if err != nil {
+				panic(err)
+			}
+			// read text using extractor
+			text, err := ex.ExtractText()
+			if err != nil {
+				panic(err)
+			}
+
+			// default points
+			points := 0
+
+			// check if candidate in US
+			if containState(text) {
+				// checking what skills the candidate has
+				if frontEndSkills(text) {
+					points += 3
+				}
+				if backEndSkills(text) {
+					points += 1
+				}
+				if otherSkills(text) {
+					points += 1
+				}
+				fmt.Println("-------------------------------------")
+				fmt.Println(fmt.Sprintf("File: %s", f.Name()))
+				fmt.Println(fmt.Sprintf("Candidate is Suitable, with score: %d/5", points))
+			} else {
+				fmt.Println("Candidate Not Suitable")
+			}
+		}
+	}
+}
+
+// func for checking if candidate lives in US
+func containState(text string) bool {
+	isUSA := false
+
+	// comma separated list of state abreviations
+	states := []string{"AK", "AL", "AR", "AS", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA", "GU", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", "ME", "MI", "MN", "MO", "MP", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "PR", "RI", "SC", "SD", "TN", "TX", "UM", "UT", "VA", "VI", "VT", "WA", "WI", "WV", "WY"}
+
+	// iterate through states to find if address in US
+	for _, state := range states {
+		if strings.Contains(text, state) {
+			isUSA = true
+		}
+	}
+	return isUSA
+}
+
+// func for checking if candidate has front end skills
+func frontEndSkills(text string) bool {
+	isFrontEnd := false
+
+	// Some front end skills that we are checking
+	skills := []string{"JavaScript", "JS", "jQuery", "Angular", "AngularJS", "React", "CSS", "SCSS"}
+
+	// Iterate through skills
+	for _, skill := range skills {
+		if strings.Contains(text, skill) {
+			isFrontEnd = true
+		}
+	}
+	return isFrontEnd
+}
+
+// func for checking if candidate has back end skills
+func backEndSkills(text string) bool {
+	isBackEnd := false
+
+	// Some front end skills that we are checking
+	skills := []string{"Python", "C++", "C#", "Node", "ASP.NET", "Django", "PHP", "Laravel"}
+
+	// Iterate through skills
+	for _, skill := range skills {
+		if strings.Contains(text, skill) {
+			isBackEnd = true
+		}
+	}
+	return isBackEnd
+}
+
+// func for checking if candidate has other end skills
+func otherSkills(text string) bool {
+	isSkilled := false
+
+	// Some front end skills that we are checking
+	skills := []string{"TDD", "Agile", "Git", "OOP", "SQL", "JIRA"}
+
+	// Iterate through skills
+	for _, skill := range skills {
+		if strings.Contains(text, skill) {
+			isSkilled = true
+		}
+	}
+	return isSkilled
+}
