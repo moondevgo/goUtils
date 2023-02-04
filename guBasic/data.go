@@ -34,6 +34,16 @@ func IndexOf[T comparable](element T, data []T) int {
 // 	return -1 //not found.
 // }
 
+// 문자열이 숫자로만 이루어졌는지 여부
+func IsDigit(s string) bool {
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
+}
+
 // * slice에서 s번째 요소 삭제
 func RemoveByIndex[T comparable](slice []T, s int) []T {
 	return append(slice[:s], slice[s+1:]...)

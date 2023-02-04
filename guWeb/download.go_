@@ -1,0 +1,147 @@
+package guWeb
+
+import (
+	"io"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"regexp"
+	"strings"
+	"time"
+
+	basic "github.com/moondevgo/goUtils/guBasic"
+)
+
+// func CreateFile(path string) (*os.File, error) {
+// 	if err := os.MkdirAll(filepath.Dir(path), 0770); err != nil {
+// 		return nil, err
+// 	}
+// 	return os.Create(path)
+// }
+
+// func MakeFolders(folderNames, basePath string) {
+// 	// TODO: mode 변경 가능하도록 perm parameter 추가 0770
+// 	if err := os.MkdirAll(folderNames, 0770); err != nil {
+// 		return nil, err
+// 	}
+// }
+
+// strMarkdown에서 file url들 추출
+func FindSubmatches(str, reg string) (submatches []string) {
+
+	for _, v := range regexp.MustCompile(reg).FindAllStringSubmatch(str, -1) {
+		submatches = append(submatches, (v[1])) // NOTE: $1들만 출력
+	}
+
+	return
+}
+
+// html, md 내의 link 주소를 상대주소(local file) 주소로 변경
+// srcUrl, baseUrl, basePath(local path) -> dstPath(local path)
+// ex) https://www.a.com/b/c.html, https://www.a.com/b, "." -> "./c.html"
+func GetDstPath(srcUrl, baseUrl, basePath string) (dstPath string) {
+	// TODO: 함수로 만듬, baseUrl이 없는 경우 고려
+	if srcUrl[len(srcUrl)-1] == 47 { // 마지막 문자가 '/'인 경우
+		return ""
+	}
+
+	if strings.Contains(srcUrl, baseUrl) {
+		dstPath = strings.Replace(srcUrl, baseUrl, basePath, 1)
+	} else if strings.Contains(srcUrl, "//") { // http://, https:// 이 있는 경우
+		splits := strings.Split(srcUrl, "//")
+		dstPath = basePath + "/" + splits[len(splits)-1]
+		// } else if srcUrl[0:1] == "." { // './'로 시작하는 경우
+		// 	dstPath = basePath + srcUrl
+	} else {
+		dstPath = ""
+		// dstPath = basePath + srcUrl
+	}
+
+	if !strings.Contains(dstPath, ".") { // NOTE: 확장자가 없는 경우
+		dstPath = dstPath + ".html"
+	}
+	return
+}
+
+// strMarkdown에서 image file url들 추출
+func ImageUrlsFromMdStr(strMarkdown string) (urls []string) {
+	matches := regexp.MustCompile(`!\[.+\]\((.+)\)`).FindAllStringSubmatch(strMarkdown, -1)
+	urls = []string{}
+	for _, v := range matches {
+		urls = append(urls, (v[1])) // NOTE: $1들만 출력
+	}
+
+	return
+}
+
+// markdown file에서 image file url들 추출
+func ImageUrlsFromMdFile(srcPath string) (urls []string) {
+	data, _ := ioutil.ReadFile(srcPath)
+	return ImageUrlsFromMdStr(string(data))
+}
+
+// srcUrl의 html -> string
+func ResponseBytes(srcUrl string) []byte {
+	client := http.Client{
+		CheckRedirect: func(r *http.Request, via []*http.Request) error {
+			r.URL.Opaque = r.URL.Path
+			return nil
+		},
+	}
+
+	// Put content on file
+	resp, err := client.Get(srcUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	_bytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	return _bytes
+}
+
+// srcUrl의 html -> string
+func ResponseStr(srcUrl string) string {
+	return string(ResponseBytes(srcUrl))
+}
+
+// srcUrl 파일 다운로드 -> 저장
+func downloadFile(srcUrl, baseUrl, basePath string) {
+	dstPath := GetDstPath(srcUrl, baseUrl, basePath)
+	if dstPath == "" { // dstPath가 없는 경우
+		return
+	}
+
+	// Create blank file
+	basic.CreateFile(dstPath) // NOTE: directory가 없으면 생성, TODO: 좀더 효율적인 다른 방법 구현
+	ioutil.WriteFile(dstPath, ResponseBytes(srcUrl), 0644)
+}
+
+// srcUrls 목록을 다운로드
+func DownloadFiles(srcUrls []string, baseUrl, basePath string) {
+	for _, srcUrl := range srcUrls {
+		downloadFile(srcUrl, baseUrl, basePath)
+		time.Sleep(100 * time.Millisecond) // NOTE: 잠시 멈춤
+	}
+}
+
+// // Markdown 문자열에 있는 Url 변경
+// func ConvUrlsInMdStr(strMarkdown, baseUrl, basePath string) string {
+// 	urls := ExtractUrlsFromMdStr(strMarkdown)
+// 	for _, url := range urls {
+// 		strMarkdown = strings.Replace(strMarkdown, url, GetDstPath(url, baseUrl, basePath), 1)
+// 	}
+// 	return strMarkdown
+// }
+
+// // Markdown 파일에 있는 Url 변경
+// func ConvUrlsInMdFile(srcPath, baseUrl, basePath, dstPath string) {
+// 	_data, _ := ioutil.ReadFile(srcPath)
+// 	data := []byte(ConvUrlsInMdStr(string(_data), baseUrl, basePath))
+// 	basic.CreateFile(dstPath) // NOTE: directory가 없으면 생성, TODO: 좀더 효율적인 다른 방법 구현
+// 	ioutil.WriteFile(dstPath, data, 0644)
+// }

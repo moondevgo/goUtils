@@ -1,0 +1,23 @@
+// [go colly 내가 경험한 최고의 스크래핑 프레임워크](https://kiwitrip.tistory.com/entry/go-colly-내가-경험한-최고의-스크래핑-프레임워크)
+package guWeb
+
+import (
+		"fmt"
+        
+		"github.com/gocolly/colly"
+		)
+
+
+func ScrapeMK() {
+	baseUrl := "https://www.mk.co.kr/news/stock/?page="
+	collector := colly.NewCollector(colly.Async(true))
+	collector.OnHTML("dl .article_list", func(e *colly.HTMLElement) {
+		title := e.ChildText("a")
+        description := e.ChildText("span .desctxt")
+        fmt.Println(title, description)
+	})
+	for i := 0; i <= 10; i++ {
+		collector.Visit(baseUrl + strconv.Itoa(i))
+	}
+	collector.Wait()
+}

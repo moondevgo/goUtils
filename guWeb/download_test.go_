@@ -1,0 +1,37 @@
+/// go test -run TestFunctionName -v
+
+package scrap
+
+import (
+	// "github.com/moondevgo/go-mods/basic"
+	"fmt"
+	"strings"
+	"testing"
+)
+
+func TestDownloadHtmls(t *testing.T) {
+	basePath := "C:/Dev/_downloads/chris/html"
+	baseUrl := "https://www.chrisatmachine.com/blog/category/neovim"
+
+	hrefs := []string{}
+	srcUrls := []string{}
+	for i := 1; i < 7; i++ {
+		href := fmt.Sprintf("https://www.chrisatmachine.com/blog/category/neovim/page/%d", i)
+		str := ResponseStr(href)
+		regex := `<a href="([^<]+)">Read More</a>`
+		hrefs = append(hrefs, FindSubmatches(str, regex)...)
+	}
+	// fmt.Printf("%v", hrefs)
+
+	for _, href := range hrefs {
+		srcUrls = append(srcUrls, strings.Replace(href, "/blog", "https://www.chrisatmachine.com/blog/category/neovim", 1))
+	}
+
+	DownloadFiles(srcUrls, baseUrl, basePath)
+}
+
+func TestDownloadImages(t *testing.T) {
+	// srcPath := `C:\Dev\_downloads\chris\md\neovim_chris.md`
+	srcPath := `C:\Dev\withGit\_docs\git-tutorial.md`
+	fmt.Printf("%v\n", ImageUrlsFromMdFile(srcPath))
+}

@@ -1,0 +1,58 @@
+// https://github.com/gocolly/colly
+
+// [크롤러 구현](https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=pjt3591oo&logNo=221346169732)
+
+package crawl
+
+import (
+	"fmt"
+	"io/ioutil"
+	"net/http"
+
+	// "strings"
+
+	"github.com/antchfx/htmlquery"
+	"golang.org/x/net/html"
+	// "github.com/moondevgo/go-mods/basic"
+	// "github.com/moondevgo/go-mods/basic"
+)
+
+func getHtml(url string) string {
+	res, err := http.Get(url)
+
+	if err != nil {
+		fmt.Println(err)
+		return ""
+	}
+
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return ""
+	}
+
+	return string(body)
+}
+
+func getNodes(url, xpath string) []*html.Node {
+	root, _ := htmlquery.LoadURL(url)
+	return htmlquery.Find(root, xpath)
+}
+
+// func getStringsFromTable(table *html.Node, pres []string) [][]string {
+// 	rows := [][]string{}
+// 	for _, row := range htmlquery.Find(table, "//tr") {
+// 		cells := pres // pres: 추가 셀 []string{}
+// 		for _, cell := range htmlquery.Find(row, "//th | //td") {
+// 			cells = append(cells, strings.TrimRight(htmlquery.InnerText(cell), "\n"))
+// 		}
+// 		// NOTE: 제목 셀인 경우 제외
+// 		if !basic.IsInString(cells[len(pres)], "필드", "Name") {
+// 			rows = append(rows, cells)
+// 		}
+
+// 	}
+// 	return rows
+// }

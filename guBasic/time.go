@@ -14,6 +14,8 @@ func FindTimeFormat(datetime string) (format string) {
 		format = "03:04:05"
 	} else if len(datetime) == 17 {
 		format = "20060102 03:04:05"
+	} else if len(datetime) == 14 {
+		format = "20060102 03:04"
 	} else if len(datetime) == 5 {
 		format = "03:04"
 	} else if len(datetime) == 4 {
@@ -25,17 +27,42 @@ func FindTimeFormat(datetime string) (format string) {
 }
 
 // format: "20060102"
-func DatetimeFromStr(date, format string) (t time.Time) {
-	t, err := time.Parse(format, date)
+func TimeFromStr(datetime, format string) (t time.Time) {
+	t, err := time.Parse(format, datetime)
 	if err != nil {
 		fmt.Printf("\n%v\n", err)
 	}
 	return t
 }
 
+func StrFromTime(datetime time.Time, format string) string {
+	return datetime.Format(format)
+}
+
+// time(str) -> timestamp
+// TimeStampFromTimeStr("20230202", "20060102") -> 1675296000
+func TimeStampFromTimeStr(datetime, format string) int64 {
+	t, err := time.Parse(format, datetime)
+	if err != nil {
+		fmt.Printf("\n%v\n", err)
+	}
+	return t.Unix()
+}
+
+// timestamp -> time(str)
+// TimeStrFromTimeStamp(1534809600, "20060102") -> 20180821
+func TimeStrFromTimeStamp(timestamp int64, format string) string {
+	return time.Unix(timestamp, 0).Format(format)
+}
+
+// now -> format string
+func Now(format string) string {
+	return time.Now().Format(format)
+}
+
 // format: "20060102" / "20060102 03:04:05" / "03:04:05"
 func AddTime(date string, add int, unit byte, format string) string {
-	t := DatetimeFromStr(date, format)
+	t := TimeFromStr(date, format)
 	t_ := time.Time{}
 	switch unit {
 	case 'S':
@@ -52,7 +79,7 @@ func AddTime(date string, add int, unit byte, format string) string {
 func addTimeInCandle(datetime string, add int, unit byte) string {
 	format := FindTimeFormat(datetime)
 
-	t := DatetimeFromStr(datetime, format)
+	t := TimeFromStr(datetime, format)
 	t_ := time.Time{}
 
 	switch unit {
@@ -82,7 +109,7 @@ func AddTimeInCandle(datetime, interval string) string {
 // Duration between t1 - t0
 func SubTime(t1, t0 string) time.Duration {
 	format := FindTimeFormat(t1)
-	return DatetimeFromStr(t1, format).Sub(DatetimeFromStr(t0, format))
+	return TimeFromStr(t1, format).Sub(TimeFromStr(t0, format))
 }
 
 func intervalFromDuration(duration time.Duration) (interval string) {
@@ -127,5 +154,5 @@ func IntervalFromTimes(t1, t0 string) (interval string) {
 // 이후시간 여부 t1 > t0이면 true
 func IsAfter(t1, t0 string) bool {
 	format := FindTimeFormat(t1)
-	return DatetimeFromStr(t1, format).After(DatetimeFromStr(t0, format))
+	return TimeFromStr(t1, format).After(TimeFromStr(t0, format))
 }
