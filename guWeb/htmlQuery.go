@@ -3,6 +3,7 @@ package guWeb
 import (
 	// "io"
 	// "net/http"
+	// "log"
 
 	"strings"
 
@@ -151,9 +152,22 @@ func MapAttByIndexes(rst map[string]string, nodes []*html.Node, keys map[string]
 // * nodes, keys(indexes) -> rst map[string]string
 // keys: ex) map[string][]interface{}{"symbol": []interface{}{1, "text", FindSymbol},...}
 func MapValByIndexes(rst map[string]string, nodes []*html.Node, keys map[string][]interface{}) map[string]string {
-	if len(nodes) < len(basic.Keys(keys)) { // TODO: vals중 가장 큰값으로
-		return nil
+	// ? nodes의 개수가 적은 경우 return nil
+	values := basic.Values(keys)
+	// log.Printf("MapValByIndexes values: %v", values)
+	switch values[0][0].(type) {
+	case int:
+		for _, value := range values {  // index중 가장 큰값 > node 개수 - 1
+			if value[0].(int) > len(nodes) - 1 {
+				return nil
+			}
+		}
+	default:
+		if len(nodes) < len(basic.Keys(keys)) { // xpath 개수 > node 개수
+			return nil
+		}
 	}
+
 	for key, setting := range keys {
 		i := setting[0].(int)
 		val := ""

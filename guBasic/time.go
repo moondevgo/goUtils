@@ -11,13 +11,13 @@ func FindTimeFormat(datetime string) (format string) {
 	if len(datetime) == 8 && !strings.Contains(datetime, ":") {
 		format = "20060102"
 	} else if len(datetime) == 8 && strings.Contains(datetime, ":") {
-		format = "03:04:05"
+		format = "15:04:05"
 	} else if len(datetime) == 17 {
-		format = "20060102 03:04:05"
+		format = "20060102 15:04:05"
 	} else if len(datetime) == 14 {
-		format = "20060102 03:04"
+		format = "20060102 15:04"
 	} else if len(datetime) == 5 {
-		format = "03:04"
+		format = "15:04"
 	} else if len(datetime) == 4 {
 		format = "2006"
 	} else if len(datetime) == 6 {
@@ -58,6 +58,30 @@ func TimeStrFromTimeStamp(timestamp int64, format string) string {
 // now -> format string
 func Now(format string) string {
 	return time.Now().Format(format)
+}
+
+// 오늘날짜
+func Today() string {
+	return time.Now().Format("20060102")
+}
+
+// 오늘날짜 + 개장시간(분단위)
+func TodayHM(hm ...string) string {
+	added := "09:00"
+	if len(hm) == 1 {
+		added = hm[0]
+	}
+	return Today() + " " + added
+}
+
+// dateStr: "20060102"
+func IsWeekday(dateStr string) bool {
+	switch TimeFromStr(dateStr, "20060102").Weekday() {
+	case time.Sunday, time.Saturday:
+		return false
+	default:
+		return true
+	}
 }
 
 // format: "20060102" / "20060102 03:04:05" / "03:04:05"

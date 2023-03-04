@@ -15,8 +15,7 @@ import (
 
 // * Stock API 접속 정보
 func GetApiSetting(serverName string) map[string]interface{} {
-	path := basic.SetFilePath(`C:\MoonDev\_config`, "guDatabase", "database_conn.yaml")
-	// log.Println("path: ", path)
+	path := basic.SetFilePath(`C:\MoonDev\_config`, "database", "database_conn.yaml")
 	return basic.GetConfigMap(path, serverName)
 }
 
@@ -120,8 +119,8 @@ func (dbms *DBMS) SQLExec(query string) (int64, int64, error) {
 	return rowsAffected, lastInsertId, nil
 }
 
-func (dbms *DBMS) Find(fields []string, table string) []map[string]interface{} {
-	results, _ := dbms.SQLExecQuery(SetSqlSelect(fields, table))
+func (dbms *DBMS) Find(table string, fields []string, added ...string) []map[string]interface{} {
+	results, _ := dbms.SQLExecQuery(SetSqlSelect(table, fields, added...))
 	return results
 }
 
@@ -135,12 +134,12 @@ func (dbms *DBMS) Find(fields []string, table string) []map[string]interface{} {
 // 	dbms.SQLExec(SetSqlInsertDict(data, table))
 // }
 
-func (dbms *DBMS) InsertOne(fields []string, values []interface{}, table string) {
-	dbms.SQLExec(SetSqlInsertOne(fields, values, table))
+func (dbms *DBMS) InsertOne(table string, fields []string, values []interface{}) {
+	dbms.SQLExec(SetSqlInsertOne(table, fields, values))
 }
 
-func (dbms *DBMS) Insert(fields []string, data [][]interface{}, table string) {
-	dbms.SQLExec(SetSqlInsert(fields, data, table))
+func (dbms *DBMS) Insert(table string, fields []string, data [][]interface{}) {
+	dbms.SQLExec(SetSqlInsert(table, fields, data))
 }
 
 // func Update(data map[string]interface{}, table string, db *sql.DB, dbms *DBMS) {
@@ -154,6 +153,15 @@ func (dbms *DBMS) Insert(fields []string, data [][]interface{}, table string) {
 // func Upsert(data []map[string]interface{}, table string, db *sql.DB, dbms *DBMS) {
 // 	dbms.SQLExec(SetSqlUpsert(data, table), db)
 // }
+
+func (dbms *DBMS) CreateTable(table string, schema string) {
+	dbms.SQLExec("CREATE TABLE " + table + " (" + schema + ") ENGINE=MYISAM CHARSET=utf8;")
+}
+
+func (dbms *DBMS) AddColumn(table string, schema string) {
+	// ALTER TABLE krx_items ADD COLUMN warning varchar(8);
+	dbms.SQLExec("ALTER TABLE " + table + " ADD COLUMN " + schema)
+}
 
 // func (dbms *DBMS) FindOne() {
 // 	var name string

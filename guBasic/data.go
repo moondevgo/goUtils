@@ -144,6 +144,24 @@ func Values[T comparable, U any](m map[T]U) (r []U) {
 	return r
 }
 
+// * items(maps []map[string]interface{} ex) mysql 리턴값) -> field 단일 필드 []interface{}
+func FlattenMaps(items []map[string]interface{}, field string) (flattens []interface{}) {
+	flattens = []interface{}{}
+	for _, item := range items {
+		flattens = append(flattens, item[field])
+	}
+	return
+}
+
+// * items(slices [][]interface{} ex) QueryOutput) -> field 단일 필드 []interface{}
+func FlattenSlices(items [][]interface{}, index int) (flattens []interface{}) {
+	flattens = []interface{}{}
+	for _, item := range items {
+		flattens = append(flattens, item[index])
+	}
+	return
+}
+
 // * []interface{} -> []string
 func StrsFromInterfaces(data []interface{}) (r []string) {
 	r = []string{}

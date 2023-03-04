@@ -22,11 +22,19 @@ type GSheet struct {
 func NewGSheet(options ...string) GSheet {
 	// options variables
 	bot_nick := "moonsats" // 0
+	user_nick := ""        // 0
 	if len(options) > 0 {
 		bot_nick = options[0]
 	}
+	if len(options) > 1 {
+		bot_nick = ""
+		user_nick = options[1]
+		log.Printf("\nelse if bot_nick: |%v|, user_nick: |%v|\n", bot_nick, user_nick)
+	}
 
-	client := ApiClient("sheets", bot_nick, "")
+	// log.Printf("\nlen: %v, bot_nick: |%v|, user_nick: |%v|\n", len(options), bot_nick, user_nick)
+	client := ApiClient("sheets", bot_nick, user_nick)
+
 	srv, err := sheets.New(client)
 	if err != nil {
 		log.Fatalf("Unable to retrieve Sheets client: %v", err)
@@ -86,5 +94,6 @@ func (gSheet *GSheet) WriteGSheet(data []map[string]string, spreadsheetId, write
 
 // * 초기화 함수
 func init() {
-	G_gSheet = NewGSheet()
+	// G_gSheet = NewGSheet()
+	G_gSheet = NewGSheet("", "moondevgoog")
 }

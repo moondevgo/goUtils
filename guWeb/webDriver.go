@@ -57,23 +57,25 @@ func OuterHtmlWD(url, xpath string) (out string) {
 }
 
 // * url, xpath -> outerhtml string
-func OuterHtmlAfterClick(url, xpathClick, xpathAfter string, timeOut int) (out string) {
+// func OuterHtmlAfterClick(url, xpathClick, xpathAfter string, timeOut int) (out string) {
+func OuterHtmlAfterClick(url, click, xpath string) (out string) {
 	ctx, cancel := chromedp.NewContext(
 		context.Background(),
 		chromedp.WithLogf(log.Printf),
 	)
 	defer cancel()
 
-	ctx, cancel = context.WithTimeout(ctx, time.Duration(timeOut)*time.Second) // TODO: timeOut int 입력변수로
+	ctx, cancel = context.WithTimeout(ctx, 15*time.Second) // TODO: timeOut int 입력변수로
+	// ctx, cancel = context.WithTimeout(ctx, time.Duration(timeOut)*time.Second) // TODO: timeOut int 입력변수로
 	defer cancel()
 
 	err := chromedp.Run(
 		ctx,
 		chromedp.Navigate(url),
-		chromedp.WaitVisible(xpathClick),
-		chromedp.Click(xpathClick, chromedp.NodeVisible),
-		chromedp.WaitVisible(xpathAfter),
-		chromedp.OuterHTML(xpathAfter, &out),
+		chromedp.WaitVisible(click),
+		chromedp.Click(click, chromedp.NodeVisible),
+		chromedp.WaitVisible(xpath),
+		chromedp.OuterHTML(xpath, &out),
 	)
 	if err != nil {
 		log.Fatal(err)

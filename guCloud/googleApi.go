@@ -1,6 +1,7 @@
 package guCloud
 
 import (
+	// "context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -19,7 +20,9 @@ const (
 )
 
 var Scopes = map[string][]string{
-	"sheets": []string{"https://www.googleapis.com/auth/spreadsheets"},
+	"sheets": {"https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/calendar"},
+	"script": {"https://www.googleapis.com/auth/script", "https://www.googleapis.com/auth/script.projects"},
+	// "script": {"https://www.googleapis.com/auth/script.projects"},
 }
 
 // * google 접속 설정 .json 경로
@@ -99,7 +102,8 @@ func ApiClient(api_name, bot_nick, user_nick string) *http.Client {
 		if err != nil {
 			log.Fatalf("Unable to parse client secret file to config: %v", err)
 		}
-		client = config.Client(oauth2.NoContext)
+		// client = config.Client(oauth2.NoContext)
+		client = config.Client(context.Background())
 	} else if authType == "user" {
 		config, err := google.ConfigFromJSON(b, Scopes[api_name]...)
 		fmt.Printf("\n*****config: %T\n", config)

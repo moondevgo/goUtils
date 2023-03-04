@@ -62,19 +62,19 @@ func ValuesStringByKeys(data map[string]interface{}, keys []string) string {
 	return "(" + strings.Join(vals, ", ") + ")"
 }
 
-func SetSqlSelect(fields []string, table string) string {
+func SetSqlSelect(table string, fields []string, added ...string) string {
 	keys := "*"
 	if len(fields) > 0 {
 		keys = strings.Join(fields, ", ")
 	}
-	return "SELECT " + keys + " FROM " + table + ";"
+	return "SELECT " + keys + " FROM " + table + " " + strings.Join(added, " ") + ";"
 }
 
-func SetSqlInsertOne(keys []string, vals []interface{}, table string) string {
+func SetSqlInsertOne(table string, keys []string, vals []interface{}) string {
 	return "INSERT INTO " + table + " (" + strings.Join(keys, ", ") + ")" + " VALUES (" + strings.Join(WrappedValues(vals), ", ") + ");"
 }
 
-func SetSqlInsert(keys []string, data [][]interface{}, table string) string {
+func SetSqlInsert(table string, keys []string, data [][]interface{}) string {
 	valuesStr := ""
 	for _, vals := range data {
 		valuesStr += "(" + strings.Join(WrappedValues(vals), ", ") + "),\n"
@@ -83,14 +83,14 @@ func SetSqlInsert(keys []string, data [][]interface{}, table string) string {
 	return "INSERT INTO " + table + " (" + strings.Join(keys, ", ") + ")" + " VALUES " + valuesStr + ";"
 }
 
-// func SetSqlInsertOneDict(data map[string]interface{}, table string) string {
+// func SetSqlInsertOneDict(table string, data map[string]interface{}) string {
 // 	keys, vals := KeysValuesOfMap(data)
 // 	str := "INSERT INTO " + table + " (" + strings.Join(keys, ", ") + ")" + " VALUES (" + strings.Join(vals, ", ") + ");"
 // 	println(str)
 // 	return "INSERT INTO " + table + " (" + strings.Join(keys, ", ") + ")" + " VALUES (" + strings.Join(vals, ", ") + ");"
 // }
 
-// func SetSqlInsertDict(data []map[string]interface{}, table string) string {
+// func SetSqlInsertDict(table string, data []map[string]interface{}) string {
 // 	keys, _ := KeysValuesOfMap(data[0])
 // 	vals := []string{}
 // 	for _, d := range data {
@@ -99,7 +99,7 @@ func SetSqlInsert(keys []string, data [][]interface{}, table string) string {
 // 	return "INSERT INTO " + table + " (" + strings.Join(keys, ", ") + ")" + " VALUES " + strings.Join(vals, ", ") + ";"
 // }
 
-func SetSqlUpdate(data map[string]interface{}, table string) string {
+func SetSqlUpdate(table string, data map[string]interface{}) string {
 	keys, vals := KeysValuesOfMap(data)
 	query := "UPDATE " + table + " SET "
 	for i := range keys {
@@ -108,7 +108,7 @@ func SetSqlUpdate(data map[string]interface{}, table string) string {
 	return query[:len(query)-2]
 }
 
-func SetSqlUpsert(data map[string]interface{}, table string) string {
+func SetSqlUpsert(table string, data map[string]interface{}) string {
 	// keys, vals := KeysValuesOfMap(data)
 	// query := "UPDATE " + table + " SET "
 	// for i := range keys {
@@ -117,9 +117,9 @@ func SetSqlUpsert(data map[string]interface{}, table string) string {
 	return ""
 }
 
-func SetSqlCreateTable(schema, table string) string {
-	return "CREATE TABLE " + table + " " + schema
-}
+// func SetSqlCreateTable(table string, schema string) string {
+// 	return "CREATE TABLE " + table + " " + schema
+// }
 
 // // func StrInsertKeyValues(data map[string]interface{}) string {
 // // 	keys, vals := KeysValuesOfMap(data)
